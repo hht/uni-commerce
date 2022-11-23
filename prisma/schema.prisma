@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  orderNo              String         @id
+  orderState           String         @default("1")
+  hangupReason         String         @default("")
+  comName              String
+  comCode              String
+  comSubName           String
+  orgName              String
+  contractNo           String
+  ouName               String?
+  createName           String
+  createNameMobile     String
+  name                 String
+  province             String
+  city                 String
+  county               String
+  town                 String
+  address              String
+  fullAddress          String
+  zip                  String
+  mobile               String
+  phone                String?
+  email                String?
+  remark               String?
+  paymentType          String
+  invoiceState         String
+  invoiceType          String
+  selectedInvoiceTitle String
+  companyName          String?
+  invoiceContent       String?
+  orderPrice           Decimal
+  orderNakedPrice      Decimal
+  orderTaxPrice        Decimal
+  realPrice            Decimal?
+  nakedRealPrice       Decimal?
+  drawBackPrice        Decimal?
+  nakedDrawBackPrice   Decimal?
+  bankNo               String?
+  taxNo                String?
+  companyAddress       String?
+  companyTel           String?
+  bankName             String?
+  baneNo               String?
+  bill_toer            String?
+  bill_to_contact      String?
+  bill_to_address      String?
+  bill_to_email        String?
+  bill_taxcode         String?
+  bill_address         String?
+  bill_tel             String?
+  bill_bank            String?
+  bill_bankno          String?
+  receiveStatus        String?
+  projectName          String?
+  projectValue         String?
+  extendField1         String?
+  extendValue1         String?
+  extendField2         String?
+  extendValue2         String?
+  extendField3         String?
+  extendValue3         String?
+  extendField4         String?
+  extendValue4         String?
+  extendField5         String?
+  extendValue5         String?
+  orderDetails         OrderDetails[]
+  delivered            Delivered[]
+  invoice              Invoice[]
+}
+
+model OrderDetails {
+  detailId     String    @id
+  sku          String
+  p_sku        String
+  goods_code   String?
+  snLength     String
+  goods_name   String
+  itemNumber   String?
+  spec         Json?
+  num          String
+  price        Decimal
+  nakedPrice   Decimal
+  taxPrice     Decimal
+  taxRate      Decimal
+  isPack       String
+  linePackInfo Package[]
+  needCheckSn  String?
+  unit         String?
+  box_type     String
+  order        Order     @relation(fields: [orderNo], references: [orderNo])
+  orderNo      String
+}
+
+model Package {
+  id             Int          @id @default(autoincrement())
+  eDetailId      Int
+  eGoodName      String
+  eGoodsAlias    String?
+  eSku           String
+  ePsku          String
+  eItemNumber    String?
+  eNakedPrice    Decimal
+  eUnitPrice     Decimal
+  eTaxPrice      Decimal
+  eTaxRate       Decimal
+  eNum           Int
+  eUnitOfMeasure String
+  orderDetails   OrderDetails @relation(fields: [orderDetailsId], references: [detailId], onDelete: Cascade, onUpdate: Cascade)
+  orderDetailsId String
+}
+
+model Invoice {
+  sendOrderNo     String      @id
+  state           String?
+  receiptState    String?
+  sendState       Int
+  sendType        Int
+  logisticsType   Int
+  logisticsCom    String?
+  logisticeComNo  String?
+  logistivsNo     String?
+  logisticsUrl    String?
+  sendingContacts String?
+  curPage         String
+  totalPage       String
+  packingList     Json
+  delivered       Delivered?
+  skus            String?
+  receiptSkus     String?
+  pSendOrderNo    String
+  order           Order       @relation(fields: [orderNo], references: [orderNo])
+  orderNo         String
+  logistics       Logistics[]
+}
+
+model Delivered {
+  deliveredId     String   @id
+  order           Order    @relation(fields: [orderNo], references: [orderNo])
+  orderNo         String
+  invoice         Invoice  @relation(fields: [sendOrderNo], references: [sendOrderNo])
+  sendOrderNo     String   @unique
+  deliveredName   String
+  deliveredMobile String
+  deliveredTime   DateTime
+  remark          String?
+  signer          String
+  signMobile      String
+  attachment      String   @default("")
+}
+
+model Logistics {
+  id          Int     @id @default(autoincrement())
+  invoice     Invoice @relation(fields: [sendOrderNo], references: [sendOrderNo])
+  sendOrderNo String
+  msgTime     String
+  content     String
+}
+
+model Config {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+}
+
+model Error {
+  id         Int      @id @default(autoincrement())
+  method     String
+  message    String
+  updated_at DateTime @default(now())
+}
