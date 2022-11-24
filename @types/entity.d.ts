@@ -1,6 +1,6 @@
 type Package = {
   id?: number;
-  eDetailId: number;
+  eDetailId: string;
   eGoodName: string;
   eGoodsAlias?: string;
   eSku: string;
@@ -21,12 +21,12 @@ type OrderDetails = {
   /**
    * 是否组合商品 0: 不是 1: 是; 该字段为 1 时，设备清单必填
    */
-  isPack: "0" | "1";
+  isPack: '0' | '1';
   goods_code: string | null;
   /**
    * 是否需要SN码或MAC码 0:否 1:SN 必填 2:MAC 必填 3:SN 与 MAC 必填
    */
-  needCheckSn: "0" | "1" | "2" | "3";
+  needCheckSn: '0' | '1' | '2' | '3';
   snLength: string;
   num: string;
   detailId: string;
@@ -118,7 +118,7 @@ type Order = {
   /**
    * 发票抬头 1 个人，2 单位
    */
-  selectedInvoiceTitle: "1" | "2";
+  selectedInvoiceTitle: '1' | '2';
   mobile: string;
   bill_tel: string | null;
   bill_address: string | null;

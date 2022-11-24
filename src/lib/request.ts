@@ -2,6 +2,8 @@ import axios from 'axios';
 import * as dayjs from 'dayjs';
 import { MD5 } from 'crypto-js';
 import { debug } from './utils';
+import { prisma } from './prisma';
+import { Prisma } from '@prisma/client';
 
 const CONFIG = process.env;
 
@@ -59,4 +61,21 @@ export const request = async <T>(uri: string, data: any): Promise<T> => {
     },
     UNI_BSS_BODY: data,
   });
+};
+
+/**
+ * 包装列表返回结果
+ */
+export const getEntities = async (
+  entity: Prisma.ModelName,
+  body: { skip: number; take: number },
+): Promise<any> => {
+  const { skip, take, ...rest } = body;
+  const items = await prisma[entity].findMany({
+    skip,
+    take,
+    where: rest,
+  });
+  const count = await prisma[entity].count();
+  return { count, items };
 };

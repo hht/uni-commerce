@@ -99,24 +99,24 @@ model OrderDetails {
   needCheckSn  String?
   unit         String?
   box_type     String
-  order        Order     @relation(fields: [orderNo], references: [orderNo])
+  order        Order     @relation(fields: [orderNo], references: [orderNo], onDelete: Cascade, onUpdate: Cascade)
   orderNo      String
 }
 
 model Package {
   id             Int          @id @default(autoincrement())
-  eDetailId      Int
+  eDetailId      String
   eGoodName      String
   eGoodsAlias    String?
   eSku           String
-  ePsku          String
+  ePsku          String?
   eItemNumber    String?
-  eNakedPrice    Decimal
-  eUnitPrice     Decimal
-  eTaxPrice      Decimal
-  eTaxRate       Decimal
-  eNum           Int
-  eUnitOfMeasure String
+  eNakedPrice    Decimal?
+  eUnitPrice     Decimal?
+  eTaxPrice      Decimal?
+  eTaxRate       Decimal?
+  eNum           Int?
+  eUnitOfMeasure String?
   orderDetails   OrderDetails @relation(fields: [orderDetailsId], references: [detailId], onDelete: Cascade, onUpdate: Cascade)
   orderDetailsId String
 }
