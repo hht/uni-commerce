@@ -38,7 +38,7 @@ export class CronService {
               await this.service.getOrder(orderNo);
               dealed.push(msgId);
             } catch (e: any) {
-              debug('订单信息处理失败', e.message);
+              this.service.handleError('订单信息处理失败', e.message);
             }
           }
           break;

@@ -160,18 +160,19 @@ model Invoice {
 }
 
 model Delivered {
-  deliveredId     String   @id
-  order           Order    @relation(fields: [orderNo], references: [orderNo])
+  deliveredId     String  @id
+  order           Order   @relation(fields: [orderNo], references: [orderNo])
   orderNo         String
-  invoice         Invoice  @relation(fields: [sendOrderNo], references: [sendOrderNo])
-  sendOrderNo     String   @unique
+  invoice         Invoice @relation(fields: [sendOrderNo], references: [sendOrderNo])
+  sendOrderNo     String  @unique
+  p_sendOrderNo   String?
   deliveredName   String
   deliveredMobile String
-  deliveredTime   DateTime
+  deliveredTime   String
   remark          String?
   signer          String
   signMobile      String
-  attachment      String   @default("")
+  attachment      Json?
 }
 
 model Logistics {

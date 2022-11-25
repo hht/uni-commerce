@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { prisma } from '~/lib/prisma';
 import { PrismaService } from '~/services/prisma.service';
 import { MD5 } from 'crypto-js';
 import { request } from '~/lib/request';
 import * as _ from 'lodash';
-import { debug, uniq } from '~/lib/utils';
+import { debug } from '~/lib/utils';
+import * as qiniu from 'qiniu';
+import * as url from 'url';
 @Injectable()
 export class UniCommerceService {
   constructor(private prismaService: PrismaService) {}
@@ -304,9 +306,19 @@ export class UniCommerceService {
       | 'signMobile'
       | 'attachment'
       | 'p_sendOrderNo'
-    > & { orderNo: string },
+    > & { orderNo: string; attachment: { url: string; key: string }[] },
   ) {
-    await this.invoke<typeof info, null>('submitDeliveredInfo', info);
+    await this.invoke<
+      Omit<typeof info, 'attachment'> & { attachment: string },
+      null
+    >('submitDeliveredInfo', {
+      ...info,
+      attachment: info.attachment.map((it) => it.url).join(','),
+    });
+    await this.getInvoiceDetail(info.p_sendOrderNo);
+    info.attachment.forEach((it) => {
+      this.removeFile(it.key);
+    });
     await prisma.delivered.create({
       data: {
         ..._.omit(info, ['orderNo']),
@@ -371,7 +383,7 @@ export class UniCommerceService {
           break;
         default:
       }
-      // await removeMessages(dealed);
+      await this.removeMessages(dealed);
     }
     return response;
   }
@@ -391,12 +403,99 @@ export class UniCommerceService {
    * @param message 错误信息
    */
   async handleError(method: string, message: string) {
-    debug('发生错误', message);
     await prisma.error.create({
       data: {
         method,
         message,
       },
+    });
+  }
+  /**
+   * 查询物流信息接口
+   */
+  async getLogistics() {
+    const response = await this.invoke<null, any>('queryLogisticsComs', null);
+    return { data: response, total: response.length };
+  }
+  /**
+   * 上传文件
+   */
+  async uploadFile(file: Express.Multer.File) {
+    const mac = new qiniu.auth.digest.Mac(
+      process.env.qiniu_access_key,
+      process.env.qiniu_secret_key,
+    );
+    const putPolicy = new qiniu.rs.PutPolicy({
+      scope: process.env.qiniu_scope,
+    });
+    const uploadToken = putPolicy.uploadToken(mac);
+    const formUploader = new qiniu.form_up.FormUploader(
+      new qiniu.conf.Config({
+        zone: qiniu.zone.Zone_z2,
+      }),
+    );
+
+    return new Promise((resolve, reject) => {
+      formUploader.put(
+        uploadToken,
+        `${Date.now()}-${file.originalname}`,
+        file.buffer,
+        new qiniu.form_up.PutExtra(),
+        (error, respBody, respInfo) => {
+          if (error) {
+            throw new InternalServerErrorException(error.message);
+          }
+
+          if (respInfo.statusCode == 200) {
+            const mac = new qiniu.auth.digest.Mac(
+              process.env.qiniu_access_key,
+              process.env.qiniu_secret_key,
+            );
+            const config = new qiniu.conf.Config();
+            const bucketManager = new qiniu.rs.BucketManager(mac, config);
+            const privateBucketDomain = process.env.qiniu_host;
+            // const deadline = Date.now() + 3600000;
+            const privateDownloadUrl = bucketManager.publicDownloadUrl(
+              privateBucketDomain,
+              respBody.key,
+              // deadline,
+            );
+            resolve({
+              url: new url.URL(privateDownloadUrl).href,
+              key: respBody.key,
+            });
+          } else {
+            throw new InternalServerErrorException(respInfo);
+          }
+        },
+      );
+    });
+  }
+  /**
+   * 删除文件
+   */
+  async removeFile(key: string) {
+    const mac = new qiniu.auth.digest.Mac(
+      process.env.qiniu_access_key,
+      process.env.qiniu_secret_key,
+    );
+    const config = new qiniu.conf.Config();
+    const bucketManager = new qiniu.rs.BucketManager(mac, config);
+    return new Promise((resolve, reject) => {
+      bucketManager.delete(
+        process.env.qiniu_scope,
+        key,
+        (err, respBody, respInfo) => {
+          if (err) {
+            throw new InternalServerErrorException(err.message);
+          }
+          if (respInfo.statusCode == 200) {
+            resolve(respBody);
+          } else {
+            throw new InternalServerErrorException(respInfo);
+          }
+        },
+      );
     });
   }
 }
