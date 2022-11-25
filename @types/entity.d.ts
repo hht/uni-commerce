@@ -132,8 +132,8 @@ type Order = {
 type Invoice = {
   sendOrderNo: string;
   state: string;
-  sendState: number;
-  logisticsType: number;
+  sendState: string;
+  logisticsType: string;
   logisticsCom?: string;
   logisticsComNo?: string;
   logisticsNo?: string;

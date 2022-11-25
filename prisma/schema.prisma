@@ -78,6 +78,7 @@ model Order {
   orderDetails         OrderDetails[]
   delivered            Delivered[]
   invoice              Invoice[]
+  created_at           DateTime       @default(now())
 }
 
 model OrderDetails {
@@ -122,27 +123,40 @@ model Package {
 }
 
 model Invoice {
-  sendOrderNo     String      @id
-  state           String?
-  receiptState    String?
-  sendState       Int
-  sendType        Int
-  logisticsType   Int
-  logisticsCom    String?
-  logisticeComNo  String?
-  logistivsNo     String?
-  logisticsUrl    String?
-  sendingContacts String?
-  curPage         String
-  totalPage       String
-  packingList     Json
-  delivered       Delivered?
-  skus            String?
-  receiptSkus     String?
-  pSendOrderNo    String
-  order           Order       @relation(fields: [orderNo], references: [orderNo])
-  orderNo         String
-  logistics       Logistics[]
+  sendOrderNo      String   @id
+  state            String?
+  address          String?
+  mobile           String?
+  acceptName       String?
+  sendTime         String?
+  isDelivered      String?
+  receiptStatus    String?
+  sendState        String?
+  sendType         String?
+  logisticsType    String?
+  logisticsCom     String?
+  logisticsComNo   String?
+  logisticsCompany String?
+  logisticsNo      String?
+  logisticsUrl     String?
+  orderTaxPrice    Decimal?
+  orderPrice       Decimal?
+  sendingContacts  String?
+  curPage          String?
+  orderNakedPrice  Decimal?
+  balanceStatus    String?
+  totalPage        String?
+
+  packingList  Json?
+  delivered    Delivered?
+  skus         Json?
+  boxs         Json?
+  receiptSkus  Json?
+  pSendOrderNo String      @unique
+  order        Order?      @relation(fields: [orderNo], references: [orderNo])
+  orderNo      String?
+  logistics    Logistics[]
+  attachments  Json?
 }
 
 model Delivered {

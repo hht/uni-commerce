@@ -106,19 +106,6 @@ export class UniCommerceService {
     if (!order) {
       throw new Error('订单不存在');
     }
-    debug('商品信息', {
-      ...order,
-      orderDetails: {
-        create: orderDetails.map((details) => {
-          return {
-            ..._.omit(details, 'linePackInfo'),
-            linePackInfo: {
-              create: details.linePackInfo || [],
-            },
-          };
-        }),
-      },
-    });
     await prisma.order.upsert({
       create: {
         ...order,
@@ -157,75 +144,85 @@ export class UniCommerceService {
    * @param orderNo 发货
    * @param sendOrderInfo
    */
-  async shipOrder(orderNo: string, packingList?: any) {
+  async shipOrder(request: any) {
     const order = await prisma.order.findUnique({
-      where: { orderNo },
+      where: { orderNo: request.orderNo },
       include: { orderDetails: true },
     });
     if (!order) {
       throw new Error('订单不存在');
     }
-    const invoice: Omit<Invoice, 'delivered'> & { sendType: 1 } = {
-      sendOrderNo: `INVOICE-${uniq()}`,
+    const invoice: Omit<Invoice, 'delivered'> & { sendType: '1' } = {
+      ...request,
       state: '1',
-      sendState: 1,
-      sendType: 1,
-      logisticsType: 3,
+      sendState: '1',
+      sendType: '1',
+      logisticsType: '3',
       curPage: '1',
       totalPage: '1',
-      packingList: [
-        {
-          pPackingNo: `PACKING-${uniq()}`,
-          packingType: 1,
-          content:
-            packingList ||
-            order.orderDetails.map((item) => ({
-              sku: item.sku,
-              p_sku: item.p_sku,
-              num: item.num,
-            })),
-        },
-      ],
     };
     const { pSendOrderNo } = await this.invoke<
       { orderNo: string; sendOrderInfo: string },
       { pSendOrderNo: string }
     >('saveDeliveryInfoNew', {
-      orderNo,
+      orderNo: request.orderNo,
       sendOrderInfo: JSON.stringify(invoice),
     });
     await prisma.invoice.create({
-      data: { ...invoice, pSendOrderNo, order: { connect: { orderNo } } },
+      data: {
+        ..._.omit(invoice, 'orderNo'),
+        pSendOrderNo,
+        order: { connect: { orderNo: request.orderNo } },
+      },
     });
+    await this.getInvoiceDetail(pSendOrderNo);
   }
   /**
    * 查询发货单状态
    * @param p_sendOrderList 平台发货单号列表
    */
-  async getInvoice(p_sendOrderList: string[]) {
+  async getInvoice(p_sendOrderList: string) {
     const items = await this.invoke<
       { p_sendOrderList: string },
       {
-        receiptState: string;
+        orderNo: string;
         state: string;
         sendOrderNo: string;
+        p_sendOrderNo: string;
         logisticsCom?: string;
         logisticsNo?: string;
         skus: string;
+        receiptState: string;
         receiptSkus: string;
       }[]
     >('querySendOrderInfo', {
-      p_sendOrderList: p_sendOrderList.join(','),
+      p_sendOrderList,
     });
-    for (const { sendOrderNo, ...rest } of items) {
-      await prisma.invoice.update({
-        data: rest,
-        where: { sendOrderNo },
+    for (const item of items) {
+      const { p_sendOrderNo, orderNo, receiptState, sendOrderNo, ...invoice } =
+        item;
+      const presist = await prisma.invoice.upsert({
+        create: {
+          ...invoice,
+          sendOrderNo,
+          receiptStatus: receiptState,
+          pSendOrderNo: item.p_sendOrderNo,
+        },
+        update: {
+          ...invoice,
+          receiptStatus: receiptState,
+          pSendOrderNo: item.p_sendOrderNo,
+        },
+        where: { pSendOrderNo: item.p_sendOrderNo },
       });
+      await this.getInvoiceDetail(presist.pSendOrderNo);
     }
+
+    return items;
   }
+
   /**
-   * 获取发货单详情
+   * 获取发货单概要
    * @param duration 间隔时间
    */
   async getInvoiceSummary(duration: [string, string]) {
@@ -249,16 +246,56 @@ export class UniCommerceService {
         sendTime: string;
       }[]
     >('querySendOrderNoByTime', info);
+    return items;
     // TODO: 保存发货单信息
+  }
+
+  /**
+   * 查询发货单详情
+   * @param p_sendOrderNo 平台发货单号
+   */
+  async getInvoiceDetail(p_sendOrderNo: string) {
+    const items = await this.invoke<
+      { p_sendOrderNo: string },
+      {
+        receiptStatus: string;
+        state: string;
+        sendOrderNo: string;
+        logisticsCom?: string;
+        logisticsNo?: string;
+        skus: string;
+        receiptSkus: string;
+        p_sendOrderNo: string;
+        orderNo: string;
+      }[]
+    >('querySendOrderInfoByNo', {
+      p_sendOrderNo,
+    });
+    for (const item of items) {
+      const { p_sendOrderNo, orderNo, ...invoice } = item;
+      await prisma.invoice.update({
+        data: {
+          ..._.omit(invoice, 'sendOrderNo'),
+          order: {
+            connect: { orderNo },
+          },
+        },
+        where: {
+          pSendOrderNo: p_sendOrderNo,
+        },
+      });
+    }
+
+    return items;
   }
   /**
    * 订单妥投
    * @param orderNo  订单号
    */
-  async confirmOrder(
-    sendOrderNo: string,
+  async confirmInvoice(
     info: Pick<
       Delivered,
+      | 'deliveredId'
       | 'deliveredName'
       | 'deliveredMobile'
       | 'deliveredTime'
@@ -266,33 +303,21 @@ export class UniCommerceService {
       | 'signer'
       | 'signMobile'
       | 'attachment'
-    >,
+      | 'p_sendOrderNo'
+    > & { orderNo: string },
   ) {
-    const invoice = await prisma.invoice.findUnique({
-      where: { sendOrderNo },
-      include: { order: true },
-    });
-    if (!invoice) {
-      throw new Error('发货单不存在');
-    }
-    const delivered = {
-      deliveredId: `DELIVERY-${uniq()}`,
-      orderNo: invoice.order.orderNo,
-      p_sendOrderNo: invoice.pSendOrderNo,
-      ...info,
-    };
-    await this.invoke<typeof delivered, null>('submitDeliveredInfo', delivered);
+    await this.invoke<typeof info, null>('submitDeliveredInfo', info);
     await prisma.delivered.create({
       data: {
-        ..._.omit(delivered, ['orderNo']),
+        ..._.omit(info, ['orderNo']),
         order: {
           connect: {
-            orderNo: invoice.order.orderNo,
+            orderNo: info.orderNo,
           },
         },
         invoice: {
           connect: {
-            sendOrderNo: invoice.sendOrderNo,
+            pSendOrderNo: info.p_sendOrderNo,
           },
         },
       },
@@ -304,36 +329,16 @@ export class UniCommerceService {
    * @param info 物流信息列表
    */
   async appendLogistics(
-    sendOrderNo: string,
-    info: { msgTime: string; content: string }[],
+    p_sendOrderNo: string,
+    logisticsInfo: { msgTime: string; content: string }[],
   ) {
-    const invoice = await prisma.invoice.findUnique({
-      where: {
-        sendOrderNo,
-      },
-    });
-    if (!invoice) {
-      throw new Error('发货单不存在');
-    }
-    await this.invoke<{ p_sendOrderNo: string; info: string }, null>(
+    await this.invoke<{ p_sendOrderNo: string; logisticsInfo: string }, null>(
       'submitLogisticsInfo',
       {
-        p_sendOrderNo: invoice.pSendOrderNo,
-        info: JSON.stringify(info),
+        p_sendOrderNo,
+        logisticsInfo: JSON.stringify(logisticsInfo),
       },
     );
-    for (const item of info) {
-      await prisma.logistics.create({
-        data: {
-          ...item,
-          invoice: {
-            connect: {
-              sendOrderNo,
-            },
-          },
-        },
-      });
-    }
   }
   /**
    * 获取消息列表

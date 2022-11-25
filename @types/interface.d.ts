@@ -1,7 +1,7 @@
 /**
  * 推送消息类型 1-订单 2-发货单 3-退货 4-结算 5-地址 6-妥投 驳回信息
  */
-type OrderMessageType = "1" | "2" | "3" | "4" | "5" | "6";
+type OrderMessageType = '1' | '2' | '3' | '4' | '5' | '6';
 
 type OrdersRequest = {
   type: OrderMessageType;
@@ -16,7 +16,7 @@ type InvoiceRequest = {
   /**
    * 处理类型 1-新增
    */
-  sendType: 1;
+  sendType: '1';
   /**
    * 发货单状态 1-正常
    */
@@ -24,7 +24,7 @@ type InvoiceRequest = {
   /**
    * 发货状态 1-已发货
    */
-  sendState: 1;
+  sendState: '1';
   /**
    * 物流信息获取类型 1-第三方标准物流 2-供应商提供物流信息查询url 3-自有物流(物流信息由供应商通过物流信息推送接口推送)4-供应商提供物流
    */

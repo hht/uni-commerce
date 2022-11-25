@@ -4,6 +4,7 @@ import { MD5 } from 'crypto-js';
 import { debug } from './utils';
 import { prisma } from './prisma';
 import { Prisma } from '@prisma/client';
+import * as _ from 'lodash';
 
 const CONFIG = process.env;
 
@@ -68,14 +69,17 @@ export const request = async <T>(uri: string, data: any): Promise<T> => {
  */
 export const getEntities = async (
   entity: Prisma.ModelName,
-  body: { skip: number; take: number },
+  body: { skip: number; take: number; orderBy?: any; include?: any },
 ): Promise<any> => {
-  const { skip, take, ...rest } = body;
-  const items = await prisma[entity].findMany({
+  const { skip, take, include, orderBy, ...rest } = body;
+  const where = _.omitBy(rest, (it) => it === undefined || it === '');
+  const data = await prisma[entity].findMany({
     skip,
     take,
-    where: rest,
+    include,
+    orderBy,
+    where,
   });
-  const count = await prisma[entity].count();
-  return { count, items };
+  const total = await prisma[entity].count({ where });
+  return { data, total };
 };
