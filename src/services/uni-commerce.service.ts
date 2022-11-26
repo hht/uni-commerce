@@ -313,7 +313,7 @@ export class UniCommerceService {
       null
     >('submitDeliveredInfo', {
       ...info,
-      attachment: info.attachment.map((it) => it.url).join(','),
+      attachment: info.attachment.map((it) => encodeURI(it.url)).join(','),
     });
     await this.getInvoiceDetail(info.p_sendOrderNo);
     info.attachment.forEach((it) => {
@@ -454,11 +454,11 @@ export class UniCommerceService {
             const config = new qiniu.conf.Config();
             const bucketManager = new qiniu.rs.BucketManager(mac, config);
             const privateBucketDomain = process.env.qiniu_host;
-            // const deadline = Date.now() + 3600000;
-            const privateDownloadUrl = bucketManager.publicDownloadUrl(
+            const deadline = Date.now() + 3600000;
+            const privateDownloadUrl = bucketManager.privateDownloadUrl(
               privateBucketDomain,
               respBody.key,
-              // deadline,
+              deadline,
             );
             resolve({
               url: new url.URL(privateDownloadUrl).href,
