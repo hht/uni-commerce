@@ -227,7 +227,7 @@ export class UniCommerceService {
    * 获取发货单概要
    * @param duration 间隔时间
    */
-  async getInvoiceSummary(duration: [string, string]) {
+  async getInvoiceSummaries(duration: [string, string]) {
     const info = {
       beginTime: duration[0],
       endTime: duration[1],
@@ -248,8 +248,10 @@ export class UniCommerceService {
         sendTime: string;
       }[]
     >('querySendOrderNoByTime', info);
-    return items;
+
     // TODO: 保存发货单信息
+
+    return { data: items, total: items.length };
   }
 
   /**

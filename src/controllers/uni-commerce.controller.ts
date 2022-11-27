@@ -57,6 +57,11 @@ export class UniCommerceController {
   getInvoice(body: { p_sendOrderNo: string }): Promise<any> {
     return this.service.getInvoice(body.p_sendOrderNo);
   }
+  @Post('/invoice-summaries')
+  @Bind(Body())
+  getInvoiceSummaries(body: { duration: [string, string] }): Promise<any> {
+    return this.service.getInvoiceSummaries(body.duration);
+  }
 
   @Post('/append-logistics')
   @Bind(Body())
