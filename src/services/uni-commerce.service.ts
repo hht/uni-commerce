@@ -4,13 +4,16 @@ import { PrismaService } from '~/services/prisma.service';
 import { MD5 } from 'crypto-js';
 import { request } from '~/lib/request';
 import * as _ from 'lodash';
-import { debug } from '~/lib/utils';
 import * as qiniu from 'qiniu';
 import * as url from 'url';
 @Injectable()
 export class UniCommerceService {
   constructor(private prismaService: PrismaService) {}
 
+  /**
+   * 获取token
+   * @returns 返回的token值
+   */
   async getAccessToken(): Promise<string> {
     const accecc_token = await prisma.config.findUnique({
       where: {
@@ -48,6 +51,10 @@ export class UniCommerceService {
     }
   }
 
+  /**
+   *
+   * @returns 刷新token
+   */
   async refreshAccessToken() {
     await prisma.config.delete({
       where: {
@@ -142,8 +149,8 @@ export class UniCommerceService {
     });
   }
   /**
-   *
-   * @param orderNo 发货
+   * 发货
+   * @param orderNo 发货单号
    * @param sendOrderInfo
    */
   async shipOrder(request: any) {
@@ -179,6 +186,7 @@ export class UniCommerceService {
     });
     await this.getInvoiceDetail(pSendOrderNo);
   }
+
   /**
    * 查询发货单状态
    * @param p_sendOrderList 平台发货单号列表
