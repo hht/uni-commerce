@@ -116,7 +116,7 @@ model Package {
   eUnitPrice     Decimal?
   eTaxPrice      Decimal?
   eTaxRate       Decimal?
-  eNum           Int?
+  eNum           String?
   eUnitOfMeasure String?
   orderDetails   OrderDetails @relation(fields: [orderDetailsId], references: [detailId], onDelete: Cascade, onUpdate: Cascade)
   orderDetailsId String

@@ -10,7 +10,7 @@ type Package = {
   eUnitPrice: number;
   eTaxPrice: number;
   eTaxRate: number;
-  eNum: number;
+  eNum: string;
   eUnitOfMeasure: string;
 };
 
