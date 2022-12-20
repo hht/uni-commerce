@@ -83,7 +83,7 @@ model Order {
 
 model OrderDetails {
   detailId     String    @id
-  sku          String
+  sku          String?
   p_sku        String
   goods_code   String?
   snLength     String

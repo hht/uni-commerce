@@ -64,6 +64,7 @@ CREATE TABLE "Order" (
     "extendValue4" TEXT,
     "extendField5" TEXT,
     "extendValue5" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Order_pkey" PRIMARY KEY ("orderNo")
 );
@@ -95,18 +96,18 @@ CREATE TABLE "OrderDetails" (
 -- CreateTable
 CREATE TABLE "Package" (
     "id" SERIAL NOT NULL,
-    "eDetailId" INTEGER NOT NULL,
+    "eDetailId" TEXT NOT NULL,
     "eGoodName" TEXT NOT NULL,
     "eGoodsAlias" TEXT,
     "eSku" TEXT NOT NULL,
-    "ePsku" TEXT NOT NULL,
+    "ePsku" TEXT,
     "eItemNumber" TEXT,
-    "eNakedPrice" DECIMAL(65,30) NOT NULL,
-    "eUnitPrice" DECIMAL(65,30) NOT NULL,
-    "eTaxPrice" DECIMAL(65,30) NOT NULL,
-    "eTaxRate" DECIMAL(65,30) NOT NULL,
-    "eNum" INTEGER NOT NULL,
-    "eUnitOfMeasure" TEXT NOT NULL,
+    "eNakedPrice" DECIMAL(65,30),
+    "eUnitPrice" DECIMAL(65,30),
+    "eTaxPrice" DECIMAL(65,30),
+    "eTaxRate" DECIMAL(65,30),
+    "eNum" TEXT,
+    "eUnitOfMeasure" TEXT,
     "orderDetailsId" TEXT NOT NULL,
 
     CONSTRAINT "Package_pkey" PRIMARY KEY ("id")
@@ -116,22 +117,34 @@ CREATE TABLE "Package" (
 CREATE TABLE "Invoice" (
     "sendOrderNo" TEXT NOT NULL,
     "state" TEXT,
-    "receiptState" TEXT,
-    "sendState" INTEGER NOT NULL,
-    "sendType" INTEGER NOT NULL,
-    "logisticsType" INTEGER NOT NULL,
+    "address" TEXT,
+    "mobile" TEXT,
+    "acceptName" TEXT,
+    "sendTime" TEXT,
+    "isDelivered" TEXT,
+    "receiptStatus" TEXT,
+    "sendState" TEXT,
+    "sendType" TEXT,
+    "logisticsType" TEXT,
     "logisticsCom" TEXT,
-    "logisticeComNo" TEXT,
-    "logistivsNo" TEXT,
+    "logisticsComNo" TEXT,
+    "logisticsCompany" TEXT,
+    "logisticsNo" TEXT,
     "logisticsUrl" TEXT,
+    "orderTaxPrice" DECIMAL(65,30),
+    "orderPrice" DECIMAL(65,30),
     "sendingContacts" TEXT,
-    "curPage" TEXT NOT NULL,
-    "totalPage" TEXT NOT NULL,
-    "packingList" JSONB NOT NULL,
-    "skus" TEXT,
-    "receiptSkus" TEXT,
+    "curPage" TEXT,
+    "orderNakedPrice" DECIMAL(65,30),
+    "balanceStatus" TEXT,
+    "totalPage" TEXT,
+    "packingList" JSONB,
+    "skus" JSONB,
+    "boxs" JSONB,
+    "receiptSkus" JSONB,
     "pSendOrderNo" TEXT NOT NULL,
-    "orderNo" TEXT NOT NULL,
+    "orderNo" TEXT,
+    "attachments" JSONB,
 
     CONSTRAINT "Invoice_pkey" PRIMARY KEY ("sendOrderNo")
 );
@@ -141,13 +154,14 @@ CREATE TABLE "Delivered" (
     "deliveredId" TEXT NOT NULL,
     "orderNo" TEXT NOT NULL,
     "sendOrderNo" TEXT NOT NULL,
+    "p_sendOrderNo" TEXT,
     "deliveredName" TEXT NOT NULL,
     "deliveredMobile" TEXT NOT NULL,
-    "deliveredTime" TIMESTAMP(3) NOT NULL,
+    "deliveredTime" TEXT NOT NULL,
     "remark" TEXT,
     "signer" TEXT NOT NULL,
     "signMobile" TEXT NOT NULL,
-    "attachment" TEXT NOT NULL DEFAULT '',
+    "attachment" JSONB,
 
     CONSTRAINT "Delivered_pkey" PRIMARY KEY ("deliveredId")
 );
@@ -182,19 +196,22 @@ CREATE TABLE "Error" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Invoice_pSendOrderNo_key" ON "Invoice"("pSendOrderNo");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Delivered_sendOrderNo_key" ON "Delivered"("sendOrderNo");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Config_key_key" ON "Config"("key");
 
 -- AddForeignKey
-ALTER TABLE "OrderDetails" ADD CONSTRAINT "OrderDetails_orderNo_fkey" FOREIGN KEY ("orderNo") REFERENCES "Order"("orderNo") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "OrderDetails" ADD CONSTRAINT "OrderDetails_orderNo_fkey" FOREIGN KEY ("orderNo") REFERENCES "Order"("orderNo") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Package" ADD CONSTRAINT "Package_orderDetailsId_fkey" FOREIGN KEY ("orderDetailsId") REFERENCES "OrderDetails"("detailId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_orderNo_fkey" FOREIGN KEY ("orderNo") REFERENCES "Order"("orderNo") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_orderNo_fkey" FOREIGN KEY ("orderNo") REFERENCES "Order"("orderNo") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Delivered" ADD CONSTRAINT "Delivered_orderNo_fkey" FOREIGN KEY ("orderNo") REFERENCES "Order"("orderNo") ON DELETE RESTRICT ON UPDATE CASCADE;

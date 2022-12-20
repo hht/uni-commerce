@@ -393,7 +393,7 @@ export class UniCommerceService {
           break;
         default:
       }
-      await this.removeMessages(dealed);
+      // await this.removeMessages(dealed);
     }
     return response;
   }
@@ -507,5 +507,11 @@ export class UniCommerceService {
         },
       );
     });
+  }
+  /**
+   * 输出错误日志
+   */
+  async getErrors() {
+    return prisma.error.findMany();
   }
 }

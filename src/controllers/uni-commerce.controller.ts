@@ -2,6 +2,7 @@ import {
   Bind,
   Body,
   Controller,
+  Get,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -81,7 +82,7 @@ export class UniCommerceController {
   @Post('/interface')
   @Bind(Body())
   getMessages(body: { id: OrderMessageType }): Promise<any> {
-    return this.service.getMessages(body.id);
+    return this.service.getMessages(body.id, 0);
   }
 
   @Post('/upload')
@@ -93,5 +94,10 @@ export class UniCommerceController {
   @Post('/logistics')
   getLogistics(): Promise<any> {
     return this.service.getLogistics();
+  }
+
+  @Get('/errors')
+  getErrors(): Promise<any> {
+    return this.service.getErrors();
   }
 }
