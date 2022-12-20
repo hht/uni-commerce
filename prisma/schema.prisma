@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://postgres:S1m0nE@postgres-db:5432/uni-commerce?schema=public"
 }
 
 model Order {

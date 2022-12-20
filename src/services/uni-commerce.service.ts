@@ -393,6 +393,7 @@ export class UniCommerceService {
           break;
         default:
       }
+      // COMMENTED: 删除已处理的消息
       // await this.removeMessages(dealed);
     }
     return response;

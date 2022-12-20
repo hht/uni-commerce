@@ -1,0 +1,53 @@
+version: '3'
+services:
+  nest:
+    image: uni-commerce:v1
+    container_name: 'nest'
+    restart: always
+    working_dir: /uni-commerce
+    volumes:
+      - ./@types:/uni-commerce/@types
+      - ./prisma:/uni-commerce/prisma
+      - ./public:/uni-commerce/public
+      - ./src:/uni-commerce/src
+    environment:
+      - DATABASE_URL=postgresql://postgres:S1m0nE@postgres-db:5432/uni-commerce?schema=public
+      - app_id=0igTx41XM2
+      - app_secret=BiFWdk3GlVt9h1JV5wK3kca5k9DK1MLg
+      - end_point=https://open.chinaunicom.cn:443/api/chinaUnicom/manageCenter/eshop
+      - client_id=bK1eqVrIzu
+      - client_secret=bAv4g2nw61deZMWwqPL8Fk
+      - corp_id=1qvRA4VF"
+      - qiniu_access_key=jK34afWM9QE3_DRLvkcE1WcTQ9AAOUaPAMZmLjzd
+      - qiniu_secret_key=bqfAs3g7xRrFl4mmB2neM4vVdvtakiW_h6-XJOS8
+      - qiniu_scope=unicom-b2b
+      - qiniu_host=http://rlx7diasc.hn-bkt.clouddn.com
+    command:
+      - /bin/bash
+      - -c
+      - |
+        npx prisma generate
+        npx prisma migrate deploy
+        yarn start
+    ports:
+      - '8080:3000'
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:13.9
+    container_name: postgres-db
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - '7411:5432'
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      - TZ=Asia/Shanghai
+      - POSTGRES_PASSWORD=S1m0nE
+      - POSTGRES_DB=uni-commerce
+      - PGDATA=/var/lib/postgresql/data
+volumes:
+  postgres:
+    name: nest-prisma-docker-db
