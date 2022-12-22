@@ -91,7 +91,7 @@ export class UniCommerceController {
   @Post('/upload')
   @UseInterceptors(FileInterceptor('file'))
   async upload(@UploadedFile() file: Express.Multer.File) {
-    return this.service.uploadLocalFile(file);
+    return this.service.uploadFile(file);
   }
 
   @Post('/logistics')

@@ -445,7 +445,7 @@ export class UniCommerceService {
     const uploadToken = putPolicy.uploadToken(mac);
     const formUploader = new qiniu.form_up.FormUploader(
       new qiniu.conf.Config({
-        zone: qiniu.zone.Zone_z2,
+        zone: qiniu.zone.Zone_z1,
       }),
     );
 
@@ -457,7 +457,7 @@ export class UniCommerceService {
         new qiniu.form_up.PutExtra(),
         (error, respBody, respInfo) => {
           if (error) {
-            throw new InternalServerErrorException(error.message);
+            reject(error);
           }
 
           if (respInfo.statusCode == 200) {
@@ -479,7 +479,7 @@ export class UniCommerceService {
               key: respBody.key,
             });
           } else {
-            throw new InternalServerErrorException(respInfo);
+            reject({ message: respBody.error });
           }
         },
       );
@@ -499,14 +499,14 @@ export class UniCommerceService {
       bucketManager.delete(
         process.env.qiniu_scope,
         key,
-        (err, respBody, respInfo) => {
-          if (err) {
-            throw new InternalServerErrorException(err.message);
+        (error, respBody, respInfo) => {
+          if (error) {
+            reject(error);
           }
           if (respInfo.statusCode == 200) {
             resolve(respBody);
           } else {
-            throw new InternalServerErrorException(respInfo);
+            reject({ message: respBody.error });
           }
         },
       );
