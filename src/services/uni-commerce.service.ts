@@ -6,6 +6,9 @@ import { request } from '~/lib/request';
 import * as _ from 'lodash';
 import * as qiniu from 'qiniu';
 import * as url from 'url';
+import { uniq } from '~/lib/utils';
+import * as fs from 'fs';
+import * as path from 'path';
 @Injectable()
 export class UniCommerceService {
   constructor(private prismaService: PrismaService) {}
@@ -327,7 +330,7 @@ export class UniCommerceService {
     });
     await this.getInvoiceDetail(info.p_sendOrderNo);
     info.attachment.forEach((it) => {
-      this.removeFile(it.key);
+      this.removeLocalFile(it.key);
     });
     await prisma.delivered.create({
       data: {
@@ -509,6 +512,28 @@ export class UniCommerceService {
       );
     });
   }
+
+  /**
+   * 上传文件到本地
+   */
+  async uploadLocalFile(file: Express.Multer.File) {
+    const filename = `${uniq()}-${file.originalname}`;
+    await fs.writeFileSync(
+      path.resolve(__dirname, '../../attachments/', filename),
+      file.buffer,
+    );
+    return {
+      url: new url.URL(`${process.env.host_name}/attachments/${filename}`).href,
+      key: filename,
+    };
+  }
+  /**
+   * 删除本地文件
+   */
+  async removeLocalFile(key: string) {
+    await fs.unlinkSync(path.resolve(__dirname, '../../attachments/', key));
+  }
+
   /**
    * 输出错误日志
    */

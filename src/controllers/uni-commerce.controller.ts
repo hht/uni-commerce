@@ -3,12 +3,15 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import _ from 'lodash';
+import * as path from 'path';
 import { getEntities } from '~/lib/request';
 import { UniCommerceService } from '~/services/uni-commerce.service';
 @Controller()
@@ -88,7 +91,7 @@ export class UniCommerceController {
   @Post('/upload')
   @UseInterceptors(FileInterceptor('file'))
   async upload(@UploadedFile() file: Express.Multer.File) {
-    return this.service.uploadFile(file);
+    return this.service.uploadLocalFile(file);
   }
 
   @Post('/logistics')
@@ -99,5 +102,11 @@ export class UniCommerceController {
   @Get('/errors')
   getErrors(): Promise<any> {
     return this.service.getErrors();
+  }
+  @Get('attachments/:name')
+  async getAttatchment(@Param('name') filename, @Res() res): Promise<any> {
+    res.sendFile(filename, {
+      root: path.resolve(__dirname, '../../attachments'),
+    });
   }
 }
